@@ -7,6 +7,8 @@ final class FetchSearchInitial extends FetchSearchState {}
 
 class FetchSearchLoading extends FetchSearchState {}
 
+class FetchSearchNextPageLoading extends FetchSearchState {}
+
 class FetchSearchSuccess extends FetchSearchState {
   final List<yt.Video> videos;
   FetchSearchSuccess(this.videos);

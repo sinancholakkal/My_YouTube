@@ -9,11 +9,34 @@ part 'fetch_search_state.dart';
 
 class FetchSearchBloc extends Bloc<FetchSearchEvent, FetchSearchState> {
   final FetchSearchVideo fetchSearchVideo;
+  String? nextPageToken;
+  String query = "";
+  List<yt.Video> videos = [];
   FetchSearchBloc(this.fetchSearchVideo) : super(FetchSearchInitial()) {
     on<SearchEvent>((event, emit) async {
       emit(FetchSearchLoading());
+      query = event.query;
       try {
-        final videos = await fetchSearchVideo.call(event.query);
+        final response = await fetchSearchVideo.call(
+          event.query,
+          pageToken: nextPageToken,
+        );
+        nextPageToken = response.nextPageToken;
+        videos.addAll(response.videos);
+        emit(FetchSearchSuccess(videos));
+      } catch (e) {
+        emit(FetchSearchFailure(e.toString()));
+      }
+    });
+    on<SearchNextPageEvent>((event, emit) async {
+      emit(FetchSearchNextPageLoading());
+      try {
+        final response = await fetchSearchVideo.call(
+          query,
+          pageToken: nextPageToken,
+        );
+        nextPageToken = response.nextPageToken;
+        videos.addAll(response.videos);
         emit(FetchSearchSuccess(videos));
       } catch (e) {
         emit(FetchSearchFailure(e.toString()));

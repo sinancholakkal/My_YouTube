@@ -7,3 +7,5 @@ class SearchEvent extends FetchSearchEvent {
   final String query;
   SearchEvent(this.query);
 }
+
+class SearchNextPageEvent extends FetchSearchEvent {}

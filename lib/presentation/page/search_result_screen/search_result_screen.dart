@@ -8,29 +8,59 @@ import 'package:my_youtube/presentation/bloc/search/fetc_search/fetch_search_blo
 import 'package:my_youtube/presentation/di/get_it.dart' as di;
 import 'package:my_youtube/presentation/page/widgets/video_card_widget.dart';
 
-class SearchResultScreen extends StatelessWidget {
+class SearchResultScreen extends StatefulWidget {
   final String query;
   const SearchResultScreen({super.key, required this.query});
+
+  @override
+  State<SearchResultScreen> createState() => _SearchResultScreenState();
+}
+
+class _SearchResultScreenState extends State<SearchResultScreen> {
+  ScrollController scrollController = ScrollController();
+  bool isLoading = false;
+  List<yt.Video> videos = [];
+  @override
+  void initState() {
+    super.initState();
+    scrollController.addListener(() {
+      if (scrollController.position.pixels >=
+              scrollController.position.maxScrollExtent * 0.9 &&
+          !isLoading) {
+        log("Next page loading");
+        context.read<FetchSearchBloc>().add(SearchNextPageEvent());
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
-        child: BlocBuilder<FetchSearchBloc, FetchSearchState>(
+        child: BlocConsumer<FetchSearchBloc, FetchSearchState>(
+          listener: (context, state) {
+            if (state is FetchSearchNextPageLoading) {
+              isLoading = true;
+            } else if (state is FetchSearchSuccess) {
+              isLoading = false;
+              videos.clear();
+              videos.addAll(state.videos);
+            }
+          },
           builder: (context, state) {
             if (state is FetchSearchLoading) {
               return const Center(child: CircularProgressIndicator());
-            } else if (state is FetchSearchSuccess) {
-              return ListView.builder(
-                itemBuilder: (context, index) {
-                  return VideoCardWidget(video: state.videos[index]);
-                },
-                itemCount: state.videos.length,
-              );
-            } else if (state is FetchSearchFailure) {
-              return Center(child: Text(state.message));
             }
-            return const Center(child: Text("Something went wrong"));
+            return ListView.builder(
+              controller: scrollController,
+              itemBuilder: (context, index) {
+                if (index == videos.length) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                return VideoCardWidget(video: videos[index]);
+              },
+              itemCount: isLoading ? videos.length + 1 : videos.length,
+            );
           },
         ),
       ),

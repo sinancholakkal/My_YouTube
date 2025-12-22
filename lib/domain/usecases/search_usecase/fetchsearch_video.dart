@@ -5,7 +5,10 @@ class FetchSearchVideo {
   final SearchRepo searchRepo;
   FetchSearchVideo(this.searchRepo);
 
-  Future<List<yt.Video>> call(String query) async {
-    return await searchRepo.fetchsearchVideos(query);
+  Future<({String? nextPageToken, List<yt.Video> videos})> call(
+    String query, {
+    String? pageToken,
+  }) async {
+    return await searchRepo.fetchsearchVideos(query, pageToken: pageToken);
   }
 }

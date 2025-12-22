@@ -6,7 +6,13 @@ class SearchRepoImpl implements SearchRepo {
   final SearchDataSource searchDataSource;
   SearchRepoImpl(this.searchDataSource);
   @override
-  Future<List<yt.Video>> fetchsearchVideos(String query) async {
-    return await searchDataSource.fetchsearchVideos(query);
+  Future<({String? nextPageToken, List<yt.Video> videos})> fetchsearchVideos(
+    String query, {
+    String? pageToken,
+  }) async {
+    return await searchDataSource.fetchsearchVideos(
+      query,
+      pageToken: pageToken,
+    );
   }
 }

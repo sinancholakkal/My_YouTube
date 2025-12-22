@@ -5,19 +5,24 @@ import 'package:my_youtube/domain/usecases/auth_usecase/get_api.dart';
 import 'package:my_youtube/presentation/di/get_it.dart' as di;
 
 class SearchDataSource {
-  Future<List<yt.Video>> fetchsearchVideos(String query) async {
+  Future<({String? nextPageToken, List<yt.Video> videos})> fetchsearchVideos(
+    String query, {
+    String? pageToken,
+  }) async {
     log("Fetch search result");
     final api = await di.sl<GetApiUseCase>().call();
     try {
       final searchResponse = await api!.search.list(
-        ['id'], // We only strictly need the ID here
-        q: query, // The user's search text
-        maxResults: 20,
-        type: ['video'], // Ensure we don't get channels/playlists
+        ['id'],
+        q: query,
+        maxResults: 10,
+        type: ['video'],
+        pageToken: pageToken,
       );
       if (searchResponse.items == null || searchResponse.items!.isEmpty) {
-        return [];
+        return (videos: <yt.Video>[], nextPageToken: null);
       }
+      final String? nextPageToken = searchResponse.nextPageToken;
 
       String videoIds = searchResponse.items!
           .map((item) => item.id?.videoId)
@@ -29,7 +34,10 @@ class SearchDataSource {
         id: [videoIds],
       );
 
-      return videoDetailsResponse.items ?? [];
+      return (
+        videos: videoDetailsResponse.items ?? <yt.Video>[],
+        nextPageToken: nextPageToken,
+      );
     } catch (e) {
       log(e.toString());
       throw Exception(e);
