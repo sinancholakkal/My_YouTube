@@ -3,7 +3,10 @@ import 'dart:developer';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:my_youtube/domain/repositories/search_repo/search_repo.dart';
+import 'package:my_youtube/domain/usecases/search_usecase/fetchsearch_video.dart';
 import 'package:my_youtube/presentation/bloc/search/fetc_search/fetch_search_bloc.dart';
+import 'package:my_youtube/presentation/di/get_it.dart' as di;
 import 'package:my_youtube/presentation/page/search_result_screen/search_result_screen.dart';
 
 class SearchScreen extends StatelessWidget {
@@ -24,12 +27,15 @@ class SearchScreen extends StatelessWidget {
                     onChanged: (value) {},
                     onSubmitted: (value) {
                       log(value);
-                      context.read<FetchSearchBloc>().add(SearchEvent(value));
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) =>
-                              SearchResultScreen(query: value),
+                          builder: (context) => BlocProvider(
+                            create: (context) => FetchSearchBloc(
+                              FetchSearchVideo(di.sl<SearchRepo>()),
+                            )..add(SearchEvent(value)),
+                            child: SearchResultScreen(query: value),
+                          ),
                         ),
                       );
                     },

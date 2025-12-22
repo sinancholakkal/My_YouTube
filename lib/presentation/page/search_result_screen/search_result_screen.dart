@@ -3,7 +3,9 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:googleapis/youtube/v3.dart' as yt;
+import 'package:my_youtube/domain/repositories/search_repo/search_repo.dart';
 import 'package:my_youtube/domain/usecases/auth_usecase/get_api.dart';
+import 'package:my_youtube/domain/usecases/search_usecase/fetchsearch_video.dart';
 import 'package:my_youtube/presentation/bloc/search/fetc_search/fetch_search_bloc.dart';
 import 'package:my_youtube/presentation/di/get_it.dart' as di;
 import 'package:my_youtube/presentation/page/widgets/video_card_widget.dart';
@@ -28,6 +30,7 @@ class _SearchResultScreenState extends State<SearchResultScreen> {
               scrollController.position.maxScrollExtent * 0.9 &&
           !isLoading) {
         log("Next page loading");
+        log(videos.length.toString());
         context.read<FetchSearchBloc>().add(SearchNextPageEvent());
       }
     });
