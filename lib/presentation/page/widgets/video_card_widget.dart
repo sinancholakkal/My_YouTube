@@ -48,8 +48,15 @@ class VideoCardWidget extends StatelessWidget {
               subtitle: Row(
                 spacing: 12,
                 children: [
-                  Text(video.snippet!.channelTitle!),
-                  Text(video.statistics!.viewCount!.toString()),
+                  Expanded(
+                    child: Text(video.snippet!.channelTitle!, maxLines: 1),
+                  ),
+                  Expanded(
+                    child: Text(
+                      video.statistics!.viewCount!.toString(),
+                      maxLines: 1,
+                    ),
+                  ),
                   // Text(
                   //   snapshot.data![index].snippet!.publishedAt!
                   //       .toString(),
