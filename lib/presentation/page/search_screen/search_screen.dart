@@ -2,6 +2,8 @@ import 'dart:developer';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:my_youtube/presentation/bloc/search/fetc_search/fetch_search_bloc.dart';
 import 'package:my_youtube/presentation/page/search_result_screen/search_result_screen.dart';
 
 class SearchScreen extends StatelessWidget {
@@ -22,6 +24,7 @@ class SearchScreen extends StatelessWidget {
                     onChanged: (value) {},
                     onSubmitted: (value) {
                       log(value);
+                      context.read<FetchSearchBloc>().add(SearchEvent(value));
                       Navigator.push(
                         context,
                         MaterialPageRoute(
