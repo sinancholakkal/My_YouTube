@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:googleapis/youtube/v3.dart' as yt;
@@ -15,8 +17,22 @@ class VideoScreen extends StatefulWidget {
 }
 
 class _VideoScreenState extends State<VideoScreen> {
+  String? viewCount;
+  String? timeAgoAt;
+  String? likeCount;
+  String? commentCount;
+  @override
+  void initState() {
+    viewCount = youtubeViewCount(widget.video.statistics?.viewCount);
+    timeAgoAt = timeAgo(widget.video.snippet?.publishedAt);
+    likeCount = youtubeViewCount(widget.video.statistics?.likeCount);
+    commentCount = youtubeViewCount(widget.video.statistics?.commentCount);
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
+    log("video suggetions ${widget.video.suggestions.toString()}");
     return Scaffold(
       body: Column(
         crossAxisAlignment: .start,
@@ -30,11 +46,11 @@ class _VideoScreenState extends State<VideoScreen> {
                 mainAxisSize: .min,
                 children: [
                   Text(
-                    "Jananayagan vijay movie trailer",
+                    widget.video.snippet!.title!,
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   Text(
-                    "@apimalayalam 2M view 2years ago",
+                    "@${widget.video.snippet?.channelTitle ?? "Unknown"} ${viewCount ?? "Unknown"}Views ${timeAgoAt ?? "Unknown"}",
                     style: TextStyle(fontSize: 12.5, color: AppPalette.grey),
                   ),
                   SizedBox(height: 14),
@@ -61,9 +77,8 @@ class _VideoScreenState extends State<VideoScreen> {
                         ),
                       ),
                       Icon(Icons.thumb_up, color: AppPalette.grey),
-                      Text("1M"),
+                      Text(likeCount ?? "0"),
                       Icon(Icons.thumb_down, color: AppPalette.grey),
-                      Text("100"),
                     ],
                   ),
                   SizedBox(height: 14),
@@ -75,6 +90,7 @@ class _VideoScreenState extends State<VideoScreen> {
                       borderRadius: .circular(12),
                       color: AppPalette.black2,
                     ),
+
                     child: Column(
                       mainAxisSize: .min,
                       children: [
@@ -86,7 +102,7 @@ class _VideoScreenState extends State<VideoScreen> {
                               style: TextStyle(fontWeight: FontWeight.bold),
                             ),
                             Text(
-                              "231",
+                              commentCount ?? "0",
                               style: TextStyle(color: AppPalette.grey),
                             ),
                           ],
@@ -122,5 +138,64 @@ class _VideoScreenState extends State<VideoScreen> {
         ],
       ),
     );
+  }
+
+  String youtubeViewCount(String? viewCount) {
+    if (viewCount == null) return "No views";
+
+    final count = int.tryParse(viewCount);
+    if (count == null) return "No views";
+
+    if (count < 1000) {
+      return count.toString();
+    }
+
+    if (count < 10_000) {
+      // 1.2K, 9.8K
+      return "${(count / 1000).toStringAsFixed(1)}K".replaceAll(".0", "");
+    }
+
+    if (count < 1_000_000) {
+      // 26K, 999K
+      return "${(count ~/ 1000)}K";
+    }
+
+    if (count < 10_000_000) {
+      // 1.2M, 9.9M
+      return "${(count / 1_000_000).toStringAsFixed(1)}M".replaceAll(".0", "");
+    }
+
+    if (count < 1_000_000_000) {
+      // 12M, 999M
+      return "${(count ~/ 1_000_000)}M";
+    }
+
+    return "${(count / 1_000_000_000).toStringAsFixed(1)}B".replaceAll(
+      ".0",
+      "",
+    );
+  }
+
+  String timeAgo(DateTime? publishedAt) {
+    if (publishedAt == null) return "Unknown";
+
+    final now = DateTime.now();
+    final difference = now.difference(publishedAt);
+
+    if (difference.inSeconds < 60) {
+      return "just now";
+    } else if (difference.inMinutes < 60) {
+      return "${difference.inMinutes} minutes ago";
+    } else if (difference.inHours < 24) {
+      return "${difference.inHours} hours ago";
+    } else if (difference.inDays < 7) {
+      return "${difference.inDays} days ago";
+    } else if (difference.inDays < 30) {
+      return "${(difference.inDays / 7).floor()} weeks ago";
+    } else if (difference.inDays < 365) {
+      return "${(difference.inDays / 30).floor()} months ago";
+    } else {
+      return "${(difference.inDays / 365).floor()} years ago";
+    }
   }
 }

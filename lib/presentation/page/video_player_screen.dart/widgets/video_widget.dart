@@ -68,7 +68,7 @@ class _VideoWidgetState extends State<VideoWidget> {
                 enableYoutubeWebViewFallback: true,
                 forceYoutubeWebViewOnly: false,
               ).copyWith(
-                autoPlay: true,
+                autoPlay: false,
                 initialPosition: Duration.zero,
                 initialVolume: 1.0,
                 initialPlaybackSpeed: 1.0,
