@@ -1,8 +1,7 @@
-import 'package:googleapis/youtube/v3.dart' as yt;
+import 'package:youtube_explode_dart/youtube_explode_dart.dart' as yt;
 
 abstract class SearchRepo {
-  Future<({String? nextPageToken, List<yt.Video> videos})> fetchsearchVideos(
-    String query, {
-    String? pageToken,
-  });
+  Future<List<yt.Video>> fetchsearchVideos(String query);
+
+  Future<List<yt.Video>> fetchsearchVideosNextPage();
 }

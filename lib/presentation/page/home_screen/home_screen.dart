@@ -1,13 +1,14 @@
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
-import 'package:googleapis/youtube/v3.dart' as yt;
+import 'package:youtube_explode_dart/youtube_explode_dart.dart' as yt;
 import 'package:my_youtube/domain/usecases/auth_usecase/get_api.dart';
 import 'package:my_youtube/presentation/core/colors/app_palette.dart';
 import 'package:my_youtube/presentation/di/get_it.dart' as di;
 import 'package:my_youtube/presentation/page/search_screen/search_screen.dart';
 import 'package:my_youtube/presentation/page/video_player_screen.dart/video_player_screen.dart';
 import 'package:my_youtube/presentation/page/widgets/video_card_widget.dart';
+import 'package:youtube_explode_dart/youtube_explode_dart.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -63,22 +64,15 @@ class HomeScreen extends StatelessWidget {
   }
 
   Future<List<yt.Video>> fetchVideos() async {
-    List<yt.Video> videos = [];
-    final api = await di.sl<GetApiUseCase>().call();
+    final yt = YoutubeExplode();
     try {
-      if (api != null) {
-        final response = await api.videos.list(
-          ['snippet', 'statistics', 'contentDetails'],
-          chart: 'mostPopular',
-          regionCode: 'IN',
-          maxResults: 20,
-        );
-        videos = response.items ?? [];
-      }
-    } catch (e) {
-      log(e.toString());
+      // TRICK: Search for "Trending" or specific categories
+      // You can change this to "Trending India" or "New Malayalam Movies"
+      var result = await yt.search.search("Malayalam Trending");
+
+      return result.toList(); // Returns the top 20 videos
+    } finally {
+      yt.close();
     }
-    log(videos[0].id.toString());
-    return videos;
   }
 }

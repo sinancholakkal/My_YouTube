@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:googleapis/youtube/v3.dart' as yt;
+import 'package:youtube_explode_dart/youtube_explode_dart.dart' as yt;
 import 'package:my_youtube/presentation/page/video_player_screen.dart/video_player_screen.dart';
 
 class VideoCardWidget extends StatelessWidget {
@@ -26,18 +26,16 @@ class VideoCardWidget extends StatelessWidget {
               decoration: BoxDecoration(
                 image: DecorationImage(
                   fit: BoxFit.cover,
-                  image: NetworkImage(video.snippet!.thumbnails!.high!.url!),
+                  image: NetworkImage(video.thumbnails.highResUrl),
                 ),
               ),
             ),
             ListTile(
               leading: CircleAvatar(
-                backgroundImage: NetworkImage(
-                  video.snippet!.thumbnails!.high!.url!,
-                ),
+                backgroundImage: NetworkImage(video.thumbnails.highResUrl),
               ),
               title: Text(
-                video.snippet!.title!,
+                video.title,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
@@ -48,12 +46,10 @@ class VideoCardWidget extends StatelessWidget {
               subtitle: Row(
                 spacing: 12,
                 children: [
-                  Expanded(
-                    child: Text(video.snippet!.channelTitle!, maxLines: 1),
-                  ),
+                  Expanded(child: Text("Channel Name", maxLines: 1)),
                   Expanded(
                     child: Text(
-                      video.statistics!.viewCount!.toString(),
+                      video.engagement.viewCount.toString(),
                       maxLines: 1,
                     ),
                   ),

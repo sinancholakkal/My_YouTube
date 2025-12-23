@@ -79,8 +79,8 @@ class _VideoWidgetState extends State<VideoWidget> {
                   OmniVideoQuality.high720,
                   OmniVideoQuality.low144,
                 ],
-                forceYoutubeWebViewOnly: true,
-                enableYoutubeWebViewFallback: true,
+                forceYoutubeWebViewOnly: false,
+                enableYoutubeWebViewFallback: false,
               ).copyWith(
                 autoPlay: true,
                 keepAlive: false,

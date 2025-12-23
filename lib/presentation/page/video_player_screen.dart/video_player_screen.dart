@@ -2,7 +2,7 @@ import 'dart:developer';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:googleapis/youtube/v3.dart' as yt;
+import 'package:youtube_explode_dart/youtube_explode_dart.dart' as yt;
 import 'package:my_youtube/presentation/core/colors/app_palette.dart';
 import 'package:my_youtube/presentation/page/video_player_screen.dart/widgets/video_widget.dart';
 import 'package:my_youtube/presentation/page/widgets/video_card_widget.dart';
@@ -23,122 +23,153 @@ class _VideoScreenState extends State<VideoScreen> {
   String? commentCount;
   @override
   void initState() {
-    viewCount = youtubeViewCount(widget.video.statistics?.viewCount);
-    timeAgoAt = timeAgo(widget.video.snippet?.publishedAt);
-    likeCount = youtubeViewCount(widget.video.statistics?.likeCount);
-    commentCount = youtubeViewCount(widget.video.statistics?.commentCount);
+    viewCount = youtubeViewCount(widget.video.engagement.viewCount.toString());
+    timeAgoAt = timeAgo(widget.video.uploadDate);
+    likeCount = youtubeViewCount(widget.video.engagement.likeCount.toString());
+    // commentCount = youtubeViewCount(widget.video.engagement.commentCount.toString());
 
     super.initState();
   }
 
   @override
   Widget build(BuildContext context) {
-    log("video suggetions ${widget.video.suggestions.toString()}");
+    // log("video suggetions ${widget.video.suggestions.toString()}");
     return Scaffold(
       body: Column(
         crossAxisAlignment: .start,
         children: [
-          VideoWidget(videoId: widget.video.id!),
+          VideoWidget(videoId: widget.video.id.toString()),
 
-          Expanded(
-            child: SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: .start,
-                mainAxisSize: .min,
-                children: [
-                  Text(
-                    widget.video.snippet!.title!,
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                  Text(
-                    "@${widget.video.snippet?.channelTitle ?? "Unknown"} ${viewCount ?? "Unknown"}Views ${timeAgoAt ?? "Unknown"}",
-                    style: TextStyle(fontSize: 12.5, color: AppPalette.grey),
-                  ),
-                  SizedBox(height: 14),
-                  //Subscribe session----------------
-                  Row(
-                    spacing: 12,
-                    children: [
-                      CircleAvatar(
-                        backgroundImage: CachedNetworkImageProvider(
-                          widget.video.snippet!.thumbnails!.high!.url!,
-                        ),
-                      ),
-                      ElevatedButton(
-                        onPressed: () {},
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppPalette.white,
-                        ),
-                        child: Text(
-                          "Subscribe",
+          FutureBuilder<List<yt.Video>>(
+            future: fetchRelatedVideos(widget.video.id.toString()),
+
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              } else if (snapshot.hasError) {
+                return Center(child: Text("Something went wrong"));
+              } else if (snapshot.connectionState == ConnectionState.done) {
+                return Expanded(
+                  child: SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: .start,
+                      mainAxisSize: .min,
+                      children: [
+                        Text(
+                          widget.video.title,
                           style: TextStyle(
-                            color: AppPalette.black.withValues(alpha: 0.6),
+                            fontSize: 18,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                      ),
-                      Icon(Icons.thumb_up, color: AppPalette.grey),
-                      Text(likeCount ?? "0"),
-                      Icon(Icons.thumb_down, color: AppPalette.grey),
-                    ],
-                  ),
-                  SizedBox(height: 14),
-                  //Comments session----------------
-                  Container(
-                    width: double.infinity,
-                    padding: .symmetric(vertical: 8, horizontal: 8),
-                    decoration: BoxDecoration(
-                      borderRadius: .circular(12),
-                      color: AppPalette.black2,
-                    ),
-
-                    child: Column(
-                      mainAxisSize: .min,
-                      children: [
+                        Text(
+                          "@${"channel name"} ${viewCount ?? "Unknown"}Views ${timeAgoAt ?? "Unknown"}",
+                          style: TextStyle(
+                            fontSize: 12.5,
+                            color: AppPalette.grey,
+                          ),
+                        ),
+                        SizedBox(height: 14),
+                        //Subscribe session----------------
                         Row(
-                          spacing: 10,
+                          spacing: 12,
                           children: [
-                            Text(
-                              "Comments",
-                              style: TextStyle(fontWeight: FontWeight.bold),
+                            CircleAvatar(
+                              backgroundImage: CachedNetworkImageProvider(
+                                widget.video.thumbnails.highResUrl,
+                              ),
                             ),
-                            Text(
-                              commentCount ?? "0",
-                              style: TextStyle(color: AppPalette.grey),
+                            ElevatedButton(
+                              onPressed: () {},
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppPalette.white,
+                              ),
+                              child: Text(
+                                "Subscribe",
+                                style: TextStyle(
+                                  color: AppPalette.black.withValues(
+                                    alpha: 0.6,
+                                  ),
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                             ),
+                            Icon(Icons.thumb_up, color: AppPalette.grey),
+                            Text(likeCount ?? "0"),
+                            Icon(Icons.thumb_down, color: AppPalette.grey),
                           ],
                         ),
-                        ListTile(
-                          leading: CircleAvatar(
-                            backgroundImage: CachedNetworkImageProvider(
-                              widget.video.snippet!.thumbnails!.high!.url!,
-                            ),
+                        SizedBox(height: 14),
+                        //Comments session----------------
+                        Container(
+                          width: double.infinity,
+                          padding: .symmetric(vertical: 8, horizontal: 8),
+                          decoration: BoxDecoration(
+                            borderRadius: .circular(12),
+                            color: AppPalette.black2,
                           ),
-                          title: Text(
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            "Ith vijayiyude last padam aayirikkum. orupad sankadam und. Ith kathhum. Njan first show kanum",
-                            style: TextStyle(fontSize: 14),
+
+                          child: Column(
+                            mainAxisSize: .min,
+                            children: [
+                              Row(
+                                spacing: 10,
+                                children: [
+                                  Text(
+                                    "Comments",
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  Text(
+                                    commentCount ?? "0",
+                                    style: TextStyle(color: AppPalette.grey),
+                                  ),
+                                ],
+                              ),
+                              ListTile(
+                                leading: CircleAvatar(
+                                  backgroundImage: CachedNetworkImageProvider(
+                                    widget.video.thumbnails.highResUrl,
+                                  ),
+                                ),
+                                title: Text(
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  "Ith vijayiyude last padam aayirikkum. orupad sankadam und. Ith kathhum. Njan first show kanum",
+                                  style: TextStyle(fontSize: 14),
+                                ),
+                              ),
+                            ],
                           ),
+                        ),
+                        ListView.builder(
+                          shrinkWrap: true,
+                          physics: NeverScrollableScrollPhysics(),
+                          itemBuilder: (context, index) {
+                            final video = snapshot.data![index];
+                            return VideoCardWidget(video: video);
+                          },
+                          itemCount: 10,
                         ),
                       ],
                     ),
                   ),
-                  ListView.builder(
-                    shrinkWrap: true,
-                    physics: NeverScrollableScrollPhysics(),
-                    itemBuilder: (context, index) {
-                      return VideoCardWidget(video: widget.video);
-                    },
-                    itemCount: 10,
-                  ),
-                ],
-              ),
-            ),
+                );
+              } else {
+                return SizedBox();
+              }
+            },
           ),
         ],
       ),
     );
+  }
+
+  Future<List<yt.Video>> fetchRelatedVideos(String videoId) async {
+    final yt.YoutubeExplode _yt = yt.YoutubeExplode();
+    var relatedVideos = await _yt.videos.getRelatedVideos(widget.video);
+    return relatedVideos!.toList();
   }
 
   String youtubeViewCount(String? viewCount) {
