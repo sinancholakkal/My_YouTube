@@ -27,6 +27,7 @@ class _VideoScreenState extends State<VideoScreen> {
     timeAgoAt = timeAgo(widget.video.snippet?.publishedAt);
     likeCount = youtubeViewCount(widget.video.statistics?.likeCount);
     commentCount = youtubeViewCount(widget.video.statistics?.commentCount);
+
     super.initState();
   }
 

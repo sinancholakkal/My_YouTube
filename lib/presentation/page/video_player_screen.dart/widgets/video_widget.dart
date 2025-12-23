@@ -23,9 +23,17 @@ class _VideoWidgetState extends State<VideoWidget> {
   OmniPlaybackController? _controller;
 
   void _update() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) setState(() {});
-    });
+    log("update executed");
+    if (_controller != null &&
+        _controller!.volume == 0 &&
+        !_controller!.isMuted) {
+      // If volume is 0 but we didn't explicitly mute, force it back to 1.0
+      _controller!.volume = 1.0;
+    }
+
+    // WidgetsBinding.instance.addPostFrameCallback((_) {
+    //   if (mounted) setState(() {});
+    // });
   }
 
   @override
@@ -45,7 +53,12 @@ class _VideoWidgetState extends State<VideoWidget> {
           onMuteToggled: (isMute) {},
           onSeekStart: (pos) {},
           onSeekEnd: (pos) {},
-          onSeekRequest: (target) => true,
+          onSeekRequest: (target) {
+            Future.delayed(const Duration(milliseconds: 500), () {
+              log("Execute after 1 second");
+            });
+            return true;
+          },
           onFinished: () {},
           onReplay: () {},
         ),
@@ -56,6 +69,7 @@ class _VideoWidgetState extends State<VideoWidget> {
                 videoUrl: Uri.parse(
                   'https://www.youtube.com/watch?v=${widget.videoId}',
                 ),
+
                 preferredQualities: [
                   OmniVideoQuality.high720,
                   OmniVideoQuality.low144,
@@ -65,15 +79,17 @@ class _VideoWidgetState extends State<VideoWidget> {
                   OmniVideoQuality.high720,
                   OmniVideoQuality.low144,
                 ],
+                forceYoutubeWebViewOnly: true,
                 enableYoutubeWebViewFallback: true,
-                forceYoutubeWebViewOnly: false,
               ).copyWith(
-                autoPlay: false,
+                autoPlay: true,
+                keepAlive: false,
                 initialPosition: Duration.zero,
                 initialVolume: 1.0,
                 initialPlaybackSpeed: 1.0,
                 availablePlaybackSpeed: [0.5, 1.0, 1.25, 1.5, 2.0],
-                autoMuteOnStart: false,
+                autoMuteOnStart: true,
+
                 allowSeeking: true,
                 synchronizeMuteAcrossPlayers: true,
                 timeoutDuration: const Duration(seconds: 30),
@@ -116,6 +132,7 @@ class _VideoWidgetState extends State<VideoWidget> {
             customAspectRatioNormal: null,
             customAspectRatioFullScreen: null,
             fullscreenOrientation: null,
+            showScrubbingThumbnailPreview: true,
           ),
           customPlayerWidgets: CustomPlayerWidgets().copyWith(
             loadingWidget: const Center(

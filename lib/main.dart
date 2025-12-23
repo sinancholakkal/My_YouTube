@@ -4,6 +4,7 @@ import 'package:extension_google_sign_in_as_googleapis_auth/extension_google_sig
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:googleapis/youtube/v3.dart';
+import 'package:media_kit/media_kit.dart';
 import 'package:my_youtube/presentation/bloc/auth/login/auth_login_bloc.dart';
 import 'package:my_youtube/presentation/core/themes/app_themes.dart';
 import 'package:my_youtube/presentation/di/get_it.dart' as di;
@@ -14,6 +15,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  MediaKit.ensureInitialized();
   await di.init();
   runApp(const MyApp());
 }
