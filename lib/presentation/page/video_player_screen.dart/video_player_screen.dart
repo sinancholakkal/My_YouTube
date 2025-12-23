@@ -2,12 +2,15 @@ import 'dart:developer';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:my_youtube/presentation/bloc/fetch_related_video/fetch_related_video_bloc.dart';
+import 'package:my_youtube/presentation/bloc/get_channel_details/get_channel_details_bloc.dart';
+import 'package:my_youtube/presentation/bloc/video_details/video_details_bloc.dart';
 import 'package:youtube_explode_dart/youtube_explode_dart.dart' as yt;
 import 'package:my_youtube/presentation/core/colors/app_palette.dart';
 import 'package:my_youtube/presentation/page/video_player_screen.dart/widgets/video_widget.dart';
 import 'package:my_youtube/presentation/page/widgets/video_card_widget.dart';
 
-/// A simple screen showing a YouTube video player with a play/pause button.
 class VideoScreen extends StatefulWidget {
   final yt.Video video;
   const VideoScreen({super.key, required this.video});
@@ -17,15 +20,25 @@ class VideoScreen extends StatefulWidget {
 }
 
 class _VideoScreenState extends State<VideoScreen> {
-  String? viewCount;
-  String? timeAgoAt;
-  String? likeCount;
-  String? commentCount;
+  // String? viewCount;
+  // String? timeAgoAt;
+  // String? likeCount;
+  // String? commentCount;
+  // String channel = "";
   @override
   void initState() {
-    viewCount = youtubeViewCount(widget.video.engagement.viewCount.toString());
-    timeAgoAt = timeAgo(widget.video.uploadDate);
-    likeCount = youtubeViewCount(widget.video.engagement.likeCount.toString());
+    context.read<VideoDetailsBloc>().add(
+      FetchVideoDetailsevent(videoId: widget.video.id.toString()),
+    );
+    context.read<GetChannelDetailsBloc>().add(
+      GetChannelDetailsEvent(channelId: widget.video.channelId.toString()),
+    );
+    context.read<FetchRelatedVideoBloc>().add(
+      FetchRelatedVideo(videoId: widget.video.id.toString()),
+    );
+    // viewCount = youtubeViewCount(widget.video.engagement.viewCount.toString());
+    // timeAgoAt = timeAgo(widget.video.uploadDate);
+    // likeCount = youtubeViewCount(widget.video.engagement.likeCount.toString());
     // commentCount = youtubeViewCount(widget.video.engagement.commentCount.toString());
 
     super.initState();
@@ -40,18 +53,16 @@ class _VideoScreenState extends State<VideoScreen> {
         children: [
           VideoWidget(videoId: widget.video.id.toString()),
 
-          FutureBuilder<List<yt.Video>>(
-            future: fetchRelatedVideos(widget.video.id.toString()),
-
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(child: CircularProgressIndicator());
-              } else if (snapshot.hasError) {
-                return Center(child: Text("Something went wrong"));
-              } else if (snapshot.connectionState == ConnectionState.done) {
-                return Expanded(
-                  child: SingleChildScrollView(
-                    child: Column(
+          Expanded(
+            child: SingleChildScrollView(
+              child: BlocBuilder<VideoDetailsBloc, VideoDetailsState>(
+                builder: (context, state) {
+                  if (state is VideoLoadingState) {
+                    return Center(child: CircularProgressIndicator());
+                  } else if (state is VideoErrorState) {
+                    return Center(child: Text(state.message));
+                  } else if (state is VideoLoadedState) {
+                    return Column(
                       crossAxisAlignment: .start,
                       mainAxisSize: .min,
                       children: [
@@ -63,7 +74,7 @@ class _VideoScreenState extends State<VideoScreen> {
                           ),
                         ),
                         Text(
-                          "@${"channel name"} ${viewCount ?? "Unknown"}Views ${timeAgoAt ?? "Unknown"}",
+                          "@${state.video.author} ${state.view}Views ${state.date}",
                           style: TextStyle(
                             fontSize: 12.5,
                             color: AppPalette.grey,
@@ -74,10 +85,23 @@ class _VideoScreenState extends State<VideoScreen> {
                         Row(
                           spacing: 12,
                           children: [
-                            CircleAvatar(
-                              backgroundImage: CachedNetworkImageProvider(
-                                widget.video.thumbnails.highResUrl,
-                              ),
+                            BlocSelector<
+                              GetChannelDetailsBloc,
+                              GetChannelDetailsState,
+                              yt.Channel?
+                            >(
+                              selector: (state) {
+                                return state is GetChannelDetailsLoaded
+                                    ? state.channel
+                                    : null;
+                              },
+                              builder: (context, state) {
+                                return CircleAvatar(
+                                  backgroundImage: CachedNetworkImageProvider(
+                                    state != null ? state.logoUrl : "s",
+                                  ),
+                                );
+                              },
                             ),
                             ElevatedButton(
                               onPressed: () {},
@@ -95,7 +119,7 @@ class _VideoScreenState extends State<VideoScreen> {
                               ),
                             ),
                             Icon(Icons.thumb_up, color: AppPalette.grey),
-                            Text(likeCount ?? "0"),
+                            Text(state.like),
                             Icon(Icons.thumb_down, color: AppPalette.grey),
                           ],
                         ),
@@ -122,7 +146,7 @@ class _VideoScreenState extends State<VideoScreen> {
                                     ),
                                   ),
                                   Text(
-                                    commentCount ?? "0",
+                                    "0",
                                     style: TextStyle(color: AppPalette.grey),
                                   ),
                                 ],
@@ -143,91 +167,41 @@ class _VideoScreenState extends State<VideoScreen> {
                             ],
                           ),
                         ),
-                        ListView.builder(
-                          shrinkWrap: true,
-                          physics: NeverScrollableScrollPhysics(),
-                          itemBuilder: (context, index) {
-                            final video = snapshot.data![index];
-                            return VideoCardWidget(video: video);
+                        BlocBuilder<
+                          FetchRelatedVideoBloc,
+                          FetchRelatedVideoState
+                        >(
+                          builder: (context, state) {
+                            if (state is FetchRelatedVideoLoading) {
+                              return const Center(
+                                child: CircularProgressIndicator(),
+                              );
+                            } else if (state is FetchRelatedVideoError) {
+                              return Center(child: Text(state.message));
+                            } else if (state is FetchRelatedVideoLoaded) {
+                              return ListView.builder(
+                                shrinkWrap: true,
+                                physics: NeverScrollableScrollPhysics(),
+                                itemBuilder: (context, index) {
+                                  final video = state.videos[index];
+                                  return VideoCardWidget(video: video);
+                                },
+                                itemCount: 10,
+                              );
+                            }
+                            return SizedBox();
                           },
-                          itemCount: 10,
                         ),
                       ],
-                    ),
-                  ),
-                );
-              } else {
-                return SizedBox();
-              }
-            },
+                    );
+                  }
+                  return const SizedBox();
+                },
+              ),
+            ),
           ),
         ],
       ),
     );
-  }
-
-  Future<List<yt.Video>> fetchRelatedVideos(String videoId) async {
-    final yt.YoutubeExplode _yt = yt.YoutubeExplode();
-    var relatedVideos = await _yt.videos.getRelatedVideos(widget.video);
-    return relatedVideos!.toList();
-  }
-
-  String youtubeViewCount(String? viewCount) {
-    if (viewCount == null) return "No views";
-
-    final count = int.tryParse(viewCount);
-    if (count == null) return "No views";
-
-    if (count < 1000) {
-      return count.toString();
-    }
-
-    if (count < 10_000) {
-      // 1.2K, 9.8K
-      return "${(count / 1000).toStringAsFixed(1)}K".replaceAll(".0", "");
-    }
-
-    if (count < 1_000_000) {
-      // 26K, 999K
-      return "${(count ~/ 1000)}K";
-    }
-
-    if (count < 10_000_000) {
-      // 1.2M, 9.9M
-      return "${(count / 1_000_000).toStringAsFixed(1)}M".replaceAll(".0", "");
-    }
-
-    if (count < 1_000_000_000) {
-      // 12M, 999M
-      return "${(count ~/ 1_000_000)}M";
-    }
-
-    return "${(count / 1_000_000_000).toStringAsFixed(1)}B".replaceAll(
-      ".0",
-      "",
-    );
-  }
-
-  String timeAgo(DateTime? publishedAt) {
-    if (publishedAt == null) return "Unknown";
-
-    final now = DateTime.now();
-    final difference = now.difference(publishedAt);
-
-    if (difference.inSeconds < 60) {
-      return "just now";
-    } else if (difference.inMinutes < 60) {
-      return "${difference.inMinutes} minutes ago";
-    } else if (difference.inHours < 24) {
-      return "${difference.inHours} hours ago";
-    } else if (difference.inDays < 7) {
-      return "${difference.inDays} days ago";
-    } else if (difference.inDays < 30) {
-      return "${(difference.inDays / 7).floor()} weeks ago";
-    } else if (difference.inDays < 365) {
-      return "${(difference.inDays / 30).floor()} months ago";
-    } else {
-      return "${(difference.inDays / 365).floor()} years ago";
-    }
   }
 }

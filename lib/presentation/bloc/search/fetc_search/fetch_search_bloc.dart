@@ -28,8 +28,12 @@ class FetchSearchBloc extends Bloc<FetchSearchEvent, FetchSearchState> {
       try {
         log("Fetching search (NO QUOTA)...");
 
-        // This call costs 0 Quota
-        final response = await fetchSearchVideo.call(event.query);
+        final List<yt.Video> response = await fetchSearchVideo.call(
+          event.query,
+        );
+        for (var v in response) {
+          log(v.engagement.likeCount.toString());
+        }
         videos.addAll(response);
         emit(FetchSearchSuccess(videos));
       } catch (e) {
