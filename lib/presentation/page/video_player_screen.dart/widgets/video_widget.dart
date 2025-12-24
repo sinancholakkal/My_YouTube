@@ -13,7 +13,8 @@ import 'package:omni_video_player/omni_video_player/widgets/omni_video_player.da
 
 class VideoWidget extends StatefulWidget {
   final String videoId;
-  const VideoWidget({super.key, required this.videoId});
+  final double height;
+  const VideoWidget({super.key, required this.videoId, required this.height});
 
   @override
   State<VideoWidget> createState() => _VideoWidgetState();
@@ -39,7 +40,8 @@ class _VideoWidgetState extends State<VideoWidget> {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 275,
+      // height: 275,
+      height: widget.height,
       child: OmniVideoPlayer(
         // Callbacks
         callbacks: VideoPlayerCallbacks(

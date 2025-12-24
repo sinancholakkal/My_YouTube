@@ -8,6 +8,7 @@ import 'package:media_kit/media_kit.dart';
 import 'package:my_youtube/presentation/bloc/auth/login/auth_login_bloc.dart';
 import 'package:my_youtube/presentation/bloc/fetch_related_video/fetch_related_video_bloc.dart';
 import 'package:my_youtube/presentation/bloc/get_channel_details/get_channel_details_bloc.dart';
+import 'package:my_youtube/presentation/bloc/get_comments/get_comments_bloc.dart';
 import 'package:my_youtube/presentation/bloc/video_details/video_details_bloc.dart';
 import 'package:my_youtube/presentation/core/themes/app_themes.dart';
 import 'package:my_youtube/presentation/di/get_it.dart' as di;
@@ -34,6 +35,7 @@ class MyApp extends StatelessWidget {
         BlocProvider(create: (context) => GetChannelDetailsBloc()),
         BlocProvider(create: (context) => FetchRelatedVideoBloc()),
         BlocProvider(create: (context) => VideoDetailsBloc()),
+        BlocProvider(create: (context) => GetCommentsBloc()),
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
