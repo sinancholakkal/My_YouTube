@@ -7,6 +7,7 @@ import 'package:my_youtube/presentation/bloc/fetch_related_video/fetch_related_v
 import 'package:my_youtube/presentation/bloc/get_channel_details/get_channel_details_bloc.dart';
 import 'package:my_youtube/presentation/bloc/get_comments/get_comments_bloc.dart';
 import 'package:my_youtube/presentation/bloc/video_details/video_details_bloc.dart';
+import 'package:readmore/readmore.dart';
 import 'package:youtube_explode_dart/youtube_explode_dart.dart' as yt;
 import 'package:my_youtube/presentation/core/colors/app_palette.dart';
 import 'package:my_youtube/presentation/page/video_player_screen.dart/widgets/video_widget.dart';
@@ -133,15 +134,7 @@ class _VideoScreenState extends State<VideoScreen> {
                         SizedBox(height: 14),
                         //Comments session----------------
                         InkWell(
-                          onTap: () => showBottomSheet(
-                            context: context,
-                            builder: (context) {
-                              return Container(
-                                height: screenHeight - screenHeight * .32,
-                                color: Colors.red,
-                              );
-                            },
-                          ),
+                          onTap: () => commentSheet(context, screenHeight),
                           child: Container(
                             width: double.infinity,
                             padding: .symmetric(vertical: 8, horizontal: 8),
@@ -249,25 +242,139 @@ class _VideoScreenState extends State<VideoScreen> {
     );
   }
 
+  PersistentBottomSheetController commentSheet(
+    BuildContext context,
+    double screenHeight,
+  ) {
+    return showBottomSheet(
+      context: context,
+      builder: (context) {
+        return SizedBox(
+          height: screenHeight - screenHeight * .32,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 16),
+            child: Column(
+              children: [
+                Row(
+                  children: [
+                    Text(
+                      "Comments",
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Spacer(),
+                    IconButton(
+                      icon: Icon(Icons.close),
+                      onPressed: () {
+                        Navigator.pop(context);
+                      },
+                    ),
+                  ],
+                ),
+                Divider(),
+
+                Expanded(
+                  child: BlocBuilder<GetCommentsBloc, GetCommentsState>(
+                    builder: (context, state) {
+                      if (state is GetCommentsLoadingState) {
+                        return const Center(child: CircularProgressIndicator());
+                      } else if (state is GetCommentsLoadedState) {
+                        return ListView.builder(
+                          itemCount: state.comments.length,
+                          itemBuilder: (context, index) {
+                            final comment = state.comments[index];
+                            final thumbnailUrl = fixThumbnailUrl(
+                              comment["thumbnail"] ?? "",
+                            );
+                            return ListTile(
+                              leading: CircleAvatar(
+                                backgroundImage: CachedNetworkImageProvider(
+                                  thumbnailUrl,
+                                ),
+                              ),
+                              title: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisSize: .min,
+                                children: [
+                                  Text(
+                                    "${comment['author']} - ${comment['commentedTime']}",
+                                    style: TextStyle(
+                                      color: AppPalette.grey,
+                                      fontSize: 12.5,
+                                    ),
+                                  ),
+                                  SizedBox(height: 8),
+                                  ReadMoreText(
+                                    comment['commentText'],
+                                    trimLines: 3,
+                                    colorClickableText: Colors.blue,
+                                    trimMode: TrimMode.Line,
+                                    trimCollapsedText: 'show more',
+                                    trimExpandedText: 'show less',
+                                    style: TextStyle(fontSize: 15),
+                                  ),
+
+                                  Row(
+                                    mainAxisSize: .min,
+                                    children: [
+                                      IconButton(
+                                        onPressed: () {},
+                                        icon: Icon(Icons.thumb_up),
+                                      ),
+                                      Text(comment['likeCount'].toString()),
+                                      SizedBox(width: 20),
+                                      IconButton(
+                                        onPressed: () {},
+                                        icon: Icon(Icons.thumb_down),
+                                      ),
+                                    ],
+                                  ),
+
+                                  TextButton(
+                                    onPressed: () {},
+                                    child: Text(
+                                      "${comment['replyCount']} replies",
+                                      style: TextStyle(
+                                        color: AppPalette.white,
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        );
+                      } else {
+                        return const Center(child: Text("No comments"));
+                      }
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   String fixThumbnailUrl(String proxyUrl) {
     try {
-      // 1. If it's empty or null, return empty
       if (proxyUrl.isEmpty) return "";
 
-      // 2. Parse the URL
       Uri uri = Uri.parse(proxyUrl);
 
-      // 3. Check if it has the "host" parameter (which Piped adds)
       if (uri.queryParameters.containsKey('host')) {
-        String originalHost =
-            uri.queryParameters['host']!; // e.g., yt3.ggpht.com
-        String path = uri.path; // e.g., /ytc/AIdro_m6k...
+        String originalHost = uri.queryParameters['host']!;
+        String path = uri.path;
 
-        // 4. Reconstruct the direct Google URL
         return "https://$originalHost$path";
       }
 
-      // If it's already a normal URL, just return it
       return proxyUrl;
     } catch (e) {
       return proxyUrl;

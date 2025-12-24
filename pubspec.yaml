@@ -47,6 +47,7 @@ dependencies:
   media_kit_video: ^2.0.1
   media_kit_libs_video: ^1.0.4 # Critical for video playback support
   http: ^1.6.0
+  readmore: ^3.0.0
 
 dev_dependencies:
   flutter_test:
